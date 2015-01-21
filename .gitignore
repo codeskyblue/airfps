@@ -16,7 +16,7 @@
 
 # Shared objects (inc. Windows DLLs)
 *.dll
-*.so
+#*.so
 *.so.*
 *.dylib
 
@@ -27,3 +27,4 @@
 *.i*86
 *.x86_64
 *.hex
+obj
