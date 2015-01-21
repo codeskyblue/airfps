@@ -1,7 +1,5 @@
 #include <stdio.h>    
 #include <stdlib.h>    
-#include <asm/user.h>    
-#include <asm/ptrace.h>    
 #include <sys/ptrace.h>
 #include <sys/wait.h>    
 #include <sys/mman.h>    
@@ -11,24 +9,31 @@
 #include <string.h>    
 #include <elf.h>
 #include <getopt.h>
-#include <android/log.h>    
+
+// FIXME(ssx): alse define here
+//#include <android/log.h>    
+//#include <asm/user.h>    
+//#include <asm/ptrace.h>    
     
 #if defined(__i386__)    
 #define pt_regs         user_regs_struct    
 #endif    
     
-#define ENABLE_DEBUG 1    
+// FIXME(ssx): add #cgo CFLAG in header
+#define ENABLE_DEBUG 1
     
 #if ENABLE_DEBUG    
 #define  LOG_TAG "INJECT"    
-#define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, fmt, ##args)
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ##args)
+#define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, fmt, ##args)
-   
 #define DEBUG_PRINT(format,args...) \    
     LOGD(format, ##args)    
 #else    
-#define DEBUG_PRINT(format,args...)    
+#define LOGD(fmt, args...)
+#define LOGI(fmt, args...)
+#define LOGE(fmt, args...)
+#define DEBUG_PRINT(format,args...)
 #endif    
     
 #define CPSR_T_MASK     ( 1u << 5 )    
@@ -182,7 +187,7 @@ long ptrace_call(pid_t pid, uint32_t addr, long *params, uint32_t num_params, st
 #error "Not supported"    
 #endif    
     
-int ptrace_getregs(pid_t pid, struct pt_regs * regs)    
+int ptrace_getregs(pid_t pid, struct user_regs_struct * regs)    
 {    
     if (ptrace(PTRACE_GETREGS, pid, NULL, regs) < 0) {    
         perror("ptrace_getregs: Can not get register values");    
@@ -192,7 +197,7 @@ int ptrace_getregs(pid_t pid, struct pt_regs * regs)
     return 0;    
 }    
     
-int ptrace_setregs(pid_t pid, struct pt_regs * regs)    
+int ptrace_setregs(pid_t pid, struct user_regs_struct * regs)    
 {    
     if (ptrace(PTRACE_SETREGS, pid, NULL, regs) < 0) {    
         perror("ptrace_setregs: Can not set register values");    
@@ -330,7 +335,7 @@ int find_pid_of(const char *process_name)
     return pid;    
 }    
     
-long ptrace_retval(struct pt_regs * regs)    
+long ptrace_retval(struct user_regs_struct * regs)    
 {    
 #if defined(__arm__)    
     return regs->ARM_r0;    
@@ -341,7 +346,7 @@ long ptrace_retval(struct pt_regs * regs)
 #endif    
 }    
     
-long ptrace_ip(struct pt_regs * regs)    
+long ptrace_ip(struct user_regs_struct * regs)    
 {    
 #if defined(__arm__)    
     return regs->ARM_pc;    
@@ -352,7 +357,7 @@ long ptrace_ip(struct pt_regs * regs)
 #endif    
 }    
     
-int ptrace_call_wrapper(pid_t target_pid, const char * func_name, void * func_addr, long * parameters, int param_num, struct pt_regs * regs)     
+int ptrace_call_wrapper(pid_t target_pid, const char * func_name, void * func_addr, long * parameters, int param_num, struct user_regs_struct * regs)     
 {    
     DEBUG_PRINT("[+] Calling %s in target process.\n", func_name);    
     if (ptrace_call(target_pid, (uint32_t)func_addr, parameters, param_num, regs) == -1)    
@@ -373,7 +378,7 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     uint8_t *map_base = 0;    
     uint8_t *dlopen_param1_ptr, *dlsym_param2_ptr, *saved_r0_pc_ptr, *inject_param_ptr, *remote_code_ptr, *local_code_ptr;    
     
-    struct pt_regs regs, original_regs;    
+    struct user_regs_struct regs, original_regs;    
     extern uint32_t _dlopen_addr_s, _dlopen_param1_s, _dlopen_param2_s, _dlsym_addr_s, \    
         _dlsym_param2_s, _dlclose_addr_s, _inject_start_s, _inject_end_s, _inject_function_param_s, \    
         _saved_cpsr_s, _saved_r0_pc_s;    
