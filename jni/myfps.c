@@ -132,9 +132,7 @@ void* get_module_base(pid_t pid, const char* module_name)
   */
  uint32_t find_got_entry_address(const char *module_path, const char *symbol_name)
  {
-	 LOGI("entry address1\n");
      void * module_base = get_module_base(-1, module_path);
-	 LOGI("entry address2 %x\n", module_base);
 
      if ( module_base == 0 )
      {
@@ -285,35 +283,34 @@ void* get_module_base(pid_t pid, const char* module_name)
 * replace GOT entry content of the function indicated by symbol name
 * with the address of hook_func
 *
-* return original name if SUCC
-* return 0 if FAILED
+* return original addr
 */
 void* do_hook(const char *module_path, void* hook_func, const char *symbol_name){
- uint32_t entry_addr = find_got_entry_address(module_path, symbol_name);
+	uint32_t entry_addr = find_got_entry_address(module_path, symbol_name);
 
- if ( entry_addr == 0 )
+	if ( entry_addr == 0 )
 	 return 0;
 
- void * original_addr = 0;
- // save original GOT entry content
- memcpy(&original_addr, (uint32_t *)entry_addr, sizeof(uint32_t));
+	void * original_addr = 0;
+	// save original GOT entry content
+	memcpy(&original_addr, (uint32_t *)entry_addr, sizeof(uint32_t));
 
- LOGD("[+] hook_fun addr: 0x%x", hook_func);
- LOGD("[+] got entry addr: 0x%x", entry_addr);
- LOGD("[+] original addr: 0x%x", original_addr);
+	LOGD("[+] hook_fun addr: 0x%x", hook_func);
+	LOGD("[+] got entry addr: 0x%x", entry_addr);
+	LOGD("[+] original addr: 0x%x", original_addr);
 
- uint32_t page_size = getpagesize();
- uint32_t entry_page_start = PAGE_START(entry_addr, page_size);
- LOGD("[+] page size: 0x%x", page_size);
- LOGD("[+] entry page start: 0x%x", entry_page_start);
+	uint32_t page_size = getpagesize();
+	uint32_t entry_page_start = PAGE_START(entry_addr, page_size);
+	LOGD("[+] page size: 0x%x", page_size);
+	LOGD("[+] entry page start: 0x%x", entry_page_start);
 
- // change the property of current page to writeable
- mprotect((uint32_t *)entry_page_start, page_size, PROT_READ | PROT_WRITE);
+	// change the property of current page to writeable
+	mprotect((uint32_t *)entry_page_start, page_size, PROT_READ | PROT_WRITE);
 
- // replace GOT entry content with hook_func's address
- memcpy((uint32_t *)entry_addr, &hook_func, sizeof(uint32_t));
+	// replace GOT entry content with hook_func's address
+	memcpy((uint32_t *)entry_addr, &hook_func, sizeof(uint32_t));
 
- return original_addr;
+	return original_addr;
 }
 
  /**
@@ -464,10 +461,3 @@ void hook_entry(char* a)
 
 	LOGI("orignal eglSwapBufffers 0x%x", orig_eglSwapBuffers);
 }
-
-//jstring
-//Java_com_example_hellojni_HelloJni_unimplementedStringFromJNI(JNIENV* env, jobject this)
-//{
-//	return (*env)->NewStringUTF(env, "unimplementedStringFromJNI!");
-//}
-
