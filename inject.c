@@ -11,9 +11,9 @@
 #include <getopt.h>
 
 // FIXME(ssx): alse define here
-//#include <android/log.h>    
-//#include <asm/user.h>    
-//#include <asm/ptrace.h>    
+#include <android/log.h>    
+#include <asm/user.h>    
+#include <asm/ptrace.h>    
     
 #if defined(__i386__)    
 #define pt_regs         user_regs_struct    
@@ -22,7 +22,7 @@
 // FIXME(ssx): add #cgo CFLAG in header
 #define ENABLE_DEBUG 1
     
-#if ENABLE_DEBUG    
+#if ENABLE_DEBUG
 #define  LOG_TAG "INJECT"    
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ##args)
 #define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, fmt, ##args)
@@ -30,10 +30,10 @@
 #define DEBUG_PRINT(format,args...) \    
     LOGD(format, ##args)    
 #else    
-#define LOGD(fmt, args...)
-#define LOGI(fmt, args...)
-#define LOGE(fmt, args...)
-#define DEBUG_PRINT(format,args...)
+#define DEBUG_PRINT(format,args...) printf(format, args...)
+#define LOGD(fmt, args...) DEBUG_PRINT(fmt, args...)
+#define LOGI(fmt, args...) DEBUG_PRINT(fmt, args...)
+#define LOGE(fmt, args...) DEBUG_PRINT(fmt, args...)
 #endif    
     
 #define CPSR_T_MASK     ( 1u << 5 )    

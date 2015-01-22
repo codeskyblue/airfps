@@ -4,6 +4,14 @@ Get FPS(frame per second) on android. Root privileges required.
 ## Still developing
 Not working for now.
 
+目前遇到了点瓶颈。只hook函数eglSwapBuffers看来还不够。
+
+需要从基础工作开始研究了。
+
+1. [ELF格式解析](ELF.md)
+2. [ptrace学习](ptrace.md)
+3. [inject函数的编写](inject.md)
+4. [注入1+1 != 2](hook.md)
 
 ## 编译指南
 代码中用了Golang，Android-NDK. [Golang-mobile](https://github.com/golang/mobile)的官网推荐用docker
