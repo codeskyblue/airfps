@@ -1,6 +1,6 @@
 package main
 
-// #cgo CFLAGS: -DCGO=1
+// #cgo CFLAGS: -DCGO=1 -DGOLANG=1
 // #cgo LDFLAGS: -lm -llog
 // #include "inject.h"
 import "C"
