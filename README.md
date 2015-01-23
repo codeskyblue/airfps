@@ -8,10 +8,10 @@ Not working for now.
 
 需要从基础工作开始研究了。
 
-1. [ELF格式解析](ELF.md)
-2. [ptrace学习](ptrace.md)
-3. [inject函数的编写](inject.md)
-4. [注入1+1 != 2](hook.md)
+1. [ELF格式解析](study-diary/ELF.md)
+2. [ptrace学习](study-diary/ptrace.md)
+3. [inject函数的编写](study-diary/inject.md)
+4. [注入1+1 != 2](study-diary/hook.md)
 
 ## 编译指南
 代码中用了Golang，Android-NDK. [Golang-mobile](https://github.com/golang/mobile)的官网推荐用docker

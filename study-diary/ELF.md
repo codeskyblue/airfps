@@ -199,3 +199,65 @@ Sections Headers[0] 竟然是空的，好奇怪，也许是历史遗留的问题
 	0000000000000026 <loop_exit>:
 	  26:	b8 01 00 00 00       	mov    $0x1,%eax
 	  2b:	cd 80                	int    $0x80
+
+了解了大概的头部结构，然后用C语言写出一个读取elf header的代码
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <elf.h>
+	#include <unistd.h>
+	#include <fcntl.h>
+
+	#define LOGD(fmt, args...) {printf("[DEUBG] "); printf(fmt, ##args); printf("\n");}
+	#define LOGE(fmt, args...) {printf("[ERROR] "); printf(fmt, ##args); printf("\n"); exit(1);}
+
+	#define ELFHDR Elf64_Ehdr
+
+	void dump(void* s, int len){
+		int i;
+		uint8_t *ent = (uint8_t*)s;
+		for(i = 0; i < len; i++){
+			if (i % 8 == 0){
+				printf("\n");
+			}
+			printf("%02x ", ent[i]);
+		}
+		printf("\n");
+	}
+
+	int main(){
+		FILE* fp;
+		fp = fopen("max.o", "rb");
+		if (fp == NULL){
+			LOGE("file(max.o) open error");
+		}
+		ELFHDR ehdr;
+		printf("size ehdr: %d\n", sizeof(ehdr));
+		int n = fread(&ehdr, 1, sizeof(ehdr), fp);
+		if (n != sizeof(ehdr)){
+			LOGE("read error in %s at line %d", __FILE__, __LINE__);
+		}
+		fclose(fp);
+		printf("section header offset: %d\n", ehdr.e_shoff);
+		printf("section header string table index: %d\n", ehdr.e_shstrndx);
+		printf("section entry size: %d\n", ehdr.e_shentsize);
+		printf("flags: 0x%x\n", ehdr.e_flags);
+		printf("version: %d\n", ehdr.e_version);
+		printf("type: %d\n", ehdr.e_type);
+		return 0;
+	}
+
+为了能兼容更多平台，ELFHDR可以这么定义
+
+	#if defined(__amd64__)
+	# define ELFHDR Elf64_Ehdr
+	#elif defined(__i386__)
+	# define ELFHDR Elf32_Ehdr
+	#elif defined(__arm__)
+	# define ELFHDR Elf32_Ehdr
+	#else
+	# error "Not supported"
+	#endif
+
+代码我放在了[myreadelf.c](study-diary/myreadelf.c)中
