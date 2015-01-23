@@ -261,3 +261,5 @@ Sections Headers[0] 竟然是空的，好奇怪，也许是历史遗留的问题
 	#endif
 
 代码我放在了[myreadelf.c](study-diary/myreadelf.c)中
+
+shared lib学习，参考了 <http://www.cprogramming.com/tutorial/shared-libraries-linux-gcc.html>
