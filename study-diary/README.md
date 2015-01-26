@@ -6,6 +6,7 @@ steps
 * ptrace参数介绍: <http://www.tutorialspoint.com/unix_system_calls/ptrace.htm>
 * X86-64调用约定: <http://zh.wikipedia.org/wiki/X86%E8%B0%83%E7%94%A8%E7%BA%A6%E5%AE%9A>
 * 入栈顺序：<http://lli_njupt.0fees.net/ar01s05.html>
+* dlopen, dlsym的使用方法：<http://blog.csdn.net/jernymy/article/details/6903683>
 
 ### trap counter
 
