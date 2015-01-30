@@ -18,7 +18,6 @@ var (
 	pid      = flag.Int("pid", 0, "pid of process to inject")
 	pname    = flag.String("pname", "/system/bin/surfaceflinger", "process name(ignore if pid set)")
 	libpath  = flag.String("libpath", "", "libpath to inject")
-	restore  = flag.Bool("restore", false, "hook restore")
 	hookfunc = flag.String("hookfunc", "hook_entry", "function name to call")
 )
 

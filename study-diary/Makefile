@@ -3,7 +3,7 @@
 # hzsunshx, 2015-01-23 17:23
 #
 
-all: libfoo.so test libhookfoo.so counter
+all: libfoo.so test libhookfoo.so counter bar
 	@echo "DONE"
 
 clean:
@@ -24,11 +24,14 @@ test: main.c libfoo.so
 	gcc -L$(PWD) -Wall -o test main.c -lfoo
 
 install: all
-	@sh push_file.sh counter inject libhookfoo.so airfps
+	@sh push_file.sh counter inject libfoo.so libhookfoo.so airfps bar
 
 # bin files
-counter: counter.c
+counter: counter.c libfoo.so
 	gcc -o counter counter.c
+
+bar: bar.c libfoo.so
+	gcc -o bar -lfoo -L$(PWD) bar.c
 
 inject: inject.c
 	gcc -o inject inject.c
