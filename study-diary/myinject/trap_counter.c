@@ -5,19 +5,21 @@
  * Distributed under terms of the MIT license.
  */
 
+#include <assert.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
 #include <sys/reg.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <unistd.h>
 
 #include "dump.h"
+
+#define pt_regs user_regs_struct
 
 const int long_size = sizeof(long);
 
@@ -69,6 +71,125 @@ void putdata(pid_t child, long addr, char *str, int len){
 		memcpy(data.chars, laddr, j);
 		ptrace(PTRACE_POKEDATA, child, addr + i * long_size, data.val);
 	}
+}
+
+// ptrace function wrapper
+int ptrace_getregs(pid_t pid, struct pt_regs *regs){
+	return ptrace(PTRACE_GETREGS, pid, NULL, regs);
+}
+int ptrace_setregs(pid_t pid, struct pt_regs *regs){
+	return ptrace(PTRACE_SETREGS, pid, NULL, regs);
+}
+int ptrace_attach(pid_t pid){
+	return ptrace(PTRACE_ATTACH, pid, NULL, 0);
+}
+int ptrace_detach(pid_t pid){
+	return ptrace(PTRACE_DETACH, pid, NULL, 0);
+}
+int ptrace_continue(pid_t pid){
+	return ptrace(PTRACE_CONT, pid, NULL, 0);
+}
+long ptrace_retval(struct pt_regs *regs){
+#if defined(__arm__)
+	return regs->ARM_r0;
+#elif defined(__i386__)
+	return regs->eax;
+#elif defined(__amd64__)
+	return regs->rax;
+#else
+#error "retval not supported"
+#endif
+}
+long ptrace_ip(struct pt_regs *regs){
+#if defined(__arm__)
+	return regs->ARM_pc;
+#elif defined(__i386__)
+	return regs->eip;
+#elif defined(__amd64__)
+	return regs->rip;
+#else
+#error "retval not supported"
+#endif
+}
+
+
+// function call using ptrace
+#if defined(__arm__)
+int ptrace_call(pid_t pid, long addr, long* args, int nargs, struct pt_regs regs){
+	int i;
+	for (i=0; i< nargs && i < 4; i++){
+		regs->uregs[i] = args[i];
+	}
+
+	if (i < nargs) {
+		regs->ARM_sp -= (nargs -i) * long_size;
+		putdata(pid, regs->ARM_sp, (char*)&args[i], (nargs-i) * long_size);
+	}
+
+	regs->ARM_pc = addr;
+	if (regs->ARM_pc & 1){
+		/* thumb */
+		regs->ARM_pc &= (~1u);
+		regs->ARM_cpsr |= CPSR_T_MASK;
+	} else {
+		/* arm */
+		regs->ARM_cpsr &= ~CPSR_T_MASK;
+	}
+
+	regs->ARM_lr = 0;
+
+	if (ptrace_setregs(pid, regs) != 0
+			|| ptrace_continue(pid) != 0){
+		LOGE("error\n");
+		return -1;
+	}
+
+	int stat = 0;
+	waitpid(pid, &stat, WUNTRACED);
+	while (stat != 0xb7f){
+		if (ptrace_continue(pid) == -1){
+			LOGE("error waitpid\n");
+			return -1;
+		}
+		waitpid(pid, &stat, WUNTRACED);
+	}
+
+	return 0;
+}
+#elif defined(__amd64__)
+//int ptrace_call(pid_t, long addr, long* args, int nargs, struct pt_regs regs){
+//	return 0;
+//}
+#else
+#error "Not supported"
+#endif
+
+long get_mod_base(pid_t pid, char * mod_name){
+	FILE *fp;
+	long addr = 0;
+	char *pch;
+	char filename[32];
+	char line[1024];
+
+	if (pid < 0){
+		snprintf(filename, sizeof(filename), "/proc/self/maps", pid);
+	} else {
+		snprintf(filename, sizeof(filename), "/proc/%d/maps", pid);
+	}
+
+	fp = fopen(filename, "r");
+	if (fp != NULL){
+		while (fgets(line, sizeof(line), fp)){
+			if (strstr(line, mod_name)) {
+				pch = strtok(line, "-");
+				addr = strtoul(pch, NULL, 16);
+				// ? check addr == 0x8000
+				break;
+			}
+		}
+		fclose(fp);
+	}
+	return addr;
 }
 
 int main(int argc, char *argv[]){
