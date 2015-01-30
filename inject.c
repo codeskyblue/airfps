@@ -1,3 +1,7 @@
+/*
+ * inject.c
+ * Use dlopen dlsym and ptrace to inject a lib into a running process
+ */
 #include <stdio.h>    
 #include <stdlib.h>    
 #include <sys/ptrace.h>
@@ -13,7 +17,7 @@
 // FIXME(ssx): alse define here
 #include <android/log.h>    
 #include <asm/user.h>    
-#include <asm/ptrace.h>    
+#include <asm/ptrace.h>    // `struct pt_regs` defined here
     
 #if defined(__i386__)    
 #define pt_regs         user_regs_struct    
@@ -154,7 +158,7 @@ int ptrace_call(pid_t pid, uint32_t addr, long *params, uint32_t num_params, str
 }    
     
 #elif defined(__i386__)    
-long ptrace_call(pid_t pid, uint32_t addr, long *params, uint32_t num_params, struct user_regs_struct * regs)    
+long ptrace_call(pid_t pid, uint32_t addr, long *params, uint32_t num_params, struct pt_regs * regs)    
 {    
     regs->esp -= (num_params) * sizeof(long) ;    
     ptrace_writedata(pid, (void *)regs->esp, (uint8_t *)params, (num_params) * sizeof(long));    
@@ -187,7 +191,7 @@ long ptrace_call(pid_t pid, uint32_t addr, long *params, uint32_t num_params, st
 #error "Not supported"    
 #endif    
     
-int ptrace_getregs(pid_t pid, struct user_regs_struct * regs)    
+int ptrace_getregs(pid_t pid, struct pt_regs * regs)    
 {    
     if (ptrace(PTRACE_GETREGS, pid, NULL, regs) < 0) {    
         perror("ptrace_getregs: Can not get register values");    
@@ -197,7 +201,7 @@ int ptrace_getregs(pid_t pid, struct user_regs_struct * regs)
     return 0;    
 }    
     
-int ptrace_setregs(pid_t pid, struct user_regs_struct * regs)    
+int ptrace_setregs(pid_t pid, struct pt_regs * regs)    
 {    
     if (ptrace(PTRACE_SETREGS, pid, NULL, regs) < 0) {    
         perror("ptrace_setregs: Can not set register values");    
@@ -335,7 +339,7 @@ int find_pid_of(const char *process_name)
     return pid;    
 }    
     
-long ptrace_retval(struct user_regs_struct * regs)    
+long ptrace_retval(struct pt_regs * regs)    
 {    
 #if defined(__arm__)    
     return regs->ARM_r0;    
@@ -346,7 +350,7 @@ long ptrace_retval(struct user_regs_struct * regs)
 #endif    
 }    
     
-long ptrace_ip(struct user_regs_struct * regs)    
+long ptrace_ip(struct pt_regs * regs)    
 {    
 #if defined(__arm__)    
     return regs->ARM_pc;    
@@ -357,7 +361,7 @@ long ptrace_ip(struct user_regs_struct * regs)
 #endif    
 }    
     
-int ptrace_call_wrapper(pid_t target_pid, const char * func_name, void * func_addr, long * parameters, int param_num, struct user_regs_struct * regs)     
+int ptrace_call_wrapper(pid_t target_pid, const char * func_name, void * func_addr, long * parameters, int param_num, struct pt_regs * regs)     
 {    
     DEBUG_PRINT("[+] Calling %s in target process.\n", func_name);    
     if (ptrace_call(target_pid, (uint32_t)func_addr, parameters, param_num, regs) == -1)    
@@ -378,7 +382,7 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     uint8_t *map_base = 0;    
     uint8_t *dlopen_param1_ptr, *dlsym_param2_ptr, *saved_r0_pc_ptr, *inject_param_ptr, *remote_code_ptr, *local_code_ptr;    
     
-    struct user_regs_struct regs, original_regs;    
+    struct pt_regs regs, original_regs;    
     extern uint32_t _dlopen_addr_s, _dlopen_param1_s, _dlopen_param2_s, _dlsym_addr_s, \    
         _dlsym_param2_s, _dlclose_addr_s, _inject_start_s, _inject_end_s, _inject_function_param_s, \    
         _saved_cpsr_s, _saved_r0_pc_s;    
@@ -477,7 +481,7 @@ void print_usage( const char *pname, int exit_code )
     exit( exit_code );
 }
 
-#ifndef CGO
+#ifndef GOLANG
 int main( int argc, char** argv )
 {
     int target_pid;

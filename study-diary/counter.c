@@ -8,11 +8,13 @@
 #include <stdio.h>
 #include <unistd.h>
 
+int global = 1;
+
 int main(){
 	printf("pid = %d\n", getpid());
 	int i;
 	for (i = 0; i < 100; i++){
-		printf("My counter: %d\n", i);
+		printf("counter: %d, global: %d\n", i, global++);
 		sleep(2);
 	}
 	return 0;

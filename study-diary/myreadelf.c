@@ -28,8 +28,6 @@
 # error "Not supported"
 #endif
 
-typedef unsigned long ulong;
-
 void dump(void* s, int len){
 	int i;
 	uint8_t *ent = (uint8_t*)s;
@@ -42,13 +40,17 @@ void dump(void* s, int len){
 	printf("\n");
 }
 
-#define LIBPATH  "max.o"
+int main(int argc, char *argv[]){
+	if(argc != 2){
+		printf("Usage: %s <library path>\n", argv[0]);
+		exit(1);
+	}
+	char* libpath = argv[1];
 
-int main(){
 	FILE* fp;
-	fp = fopen(LIBPATH, "rb");
+	fp = fopen(libpath, "rb");
 	if (fp == NULL){
-		LOGE("file(max.o) open error");
+		LOGE("file(%s) open error", libpath);
 	}
 	ELF(Ehdr) ehdr;
 	printf("size ehdr: %d\n", sizeof(ehdr));
@@ -60,8 +62,8 @@ int main(){
 	LOGI("strtab index: %d", ehdr.e_shstrndx);
 	//dump(&ehdr, sizeof(ehdr));
 
-	ulong sh_base = ehdr.e_shoff; // section header start
-	ulong strndx = ehdr.e_shstrndx;
+	long sh_base = ehdr.e_shoff; // section header start
+	long strndx = ehdr.e_shstrndx;
 
 	// section header string tab
 	ELF(Shdr) shdr;
