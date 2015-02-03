@@ -3,14 +3,14 @@
 # hzsunshx, 2015-01-23 17:23
 #
 
-all: libfoo.so test libhookfoo.so counter bar
+all: libfoo.so test libhookfoo.so counter bar inject
 	@echo "DONE"
 
 clean:
 	rm libfoo.so libhookfoo.so
 
-#inject: inject.c
-#	gcc -o inject inject.c -ldl
+inject: inject.c
+	gcc -o inject inject.c -llog -ldl
 
 libfoo.so: foo.c
 	gcc -c -Wall -Werror -fpic foo.c
@@ -32,9 +32,6 @@ counter: counter.c libfoo.so
 
 bar: bar.c libfoo.so
 	gcc -o bar -lfoo -L$(PWD) bar.c
-
-inject: inject.c
-	gcc -o inject inject.c
 
 # vim:ft=make
 #

@@ -76,7 +76,7 @@ func libs_armeabi_libmyfps_so() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindata_file_info{name: "libs/armeabi/libmyfps.so", size: 21624, mode: os.FileMode(493), modTime: time.Unix(1422583434, 0)}
+	info := bindata_file_info{name: "libs/armeabi/libmyfps.so", size: 21624, mode: os.FileMode(493), modTime: time.Unix(1422949178, 0)}
 	a := &asset{bytes: bytes, info:  info}
 	return a, nil
 }

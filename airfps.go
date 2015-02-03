@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	pid      = flag.Int("pid", 0, "pid of process to inject")
+	pid      = flag.Int("p", 0, "pid of process to inject")
 	pname    = flag.String("pname", "/system/bin/surfaceflinger", "process name(ignore if pid set)")
-	libpath  = flag.String("libpath", "", "libpath to inject")
-	hookfunc = flag.String("hookfunc", "hook_entry", "function name to call")
+	libpath  = flag.String("l", "", "libpath to inject")
+	hookfunc = flag.String("n", "hook_entry", "function name to call")
 )
 
 func SurfacePid() int {

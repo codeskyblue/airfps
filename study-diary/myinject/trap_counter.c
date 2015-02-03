@@ -21,6 +21,9 @@
 
 #define pt_regs user_regs_struct
 
+#define LOGI(fmt, args...) {printf("[I] "); printf(fmt, ##args);}
+#define LOGE(fmt, args...) {printf("[E] "); printf(fmt, ##args);}
+
 const int long_size = sizeof(long);
 
 void getdata(pid_t child, long addr, char *str, int len){
@@ -138,7 +141,7 @@ int ptrace_call(pid_t pid, long addr, long* args, int nargs, struct pt_regs regs
 
 	regs->ARM_lr = 0;
 
-	if (ptrace_setregs(pid, regs) != 0
+	if (ptrace_setregs(pid, &regs) != 0
 			|| ptrace_continue(pid) != 0){
 		LOGE("error\n");
 		return -1;
@@ -157,9 +160,35 @@ int ptrace_call(pid_t pid, long addr, long* args, int nargs, struct pt_regs regs
 	return 0;
 }
 #elif defined(__amd64__)
-//int ptrace_call(pid_t, long addr, long* args, int nargs, struct pt_regs regs){
-//	return 0;
-//}
+int ptrace_call(pid_t pid, long addr, long* args, int nargs, struct pt_regs regs){
+	int i;
+	long* urgs[6] = {&regs.rdi, &regs.rsi, &regs.rdx, &regs.rcx, &regs.r8, &regs.r9};
+	for (i=0; i< nargs && i < 6; i++){
+		*urgs[i] = args[i];
+	}
+	//if (i < nargs) {
+	//	regs->ARM_sp -= (nargs -i) * long_size;
+	//	putdata(pid, regs->ARM_sp, (char*)&args[i], (nargs-i) * long_size);
+	//}
+	regs.rip = addr;
+	if (ptrace_setregs(pid, &regs) != 0
+			|| ptrace_continue(pid) != 0){
+		LOGE("error\n");
+		return -1;
+	}
+	int stat = 0;
+	waitpid(pid, &stat, WUNTRACED);
+	int max = 10;
+	while (stat != 0xb7f && max-- != 0){
+		LOGI("stat: %p\n", stat);
+		if (ptrace_continue(pid) == -1){
+			LOGE("error waitpid\n");
+			return -1;
+		}
+		waitpid(pid, &stat, WUNTRACED);
+	}
+	return 0;
+}
 #else
 #error "Not supported"
 #endif
@@ -193,10 +222,19 @@ long get_mod_base(pid_t pid, char * mod_name){
 }
 
 int main(int argc, char *argv[]){
+	if(argc != 2){
+		printf("Usage: %s <pid to be traced>\n", argv[0]);
+		exit(1);
+	}
+	//ptrace_call(
+	return 0;
+}
+int _main(int argc, char *argv[]){
 	pid_t traced_process;
 	struct user_regs_struct regs, newregs;
 	long ins;
 	/* int 0x80, int3 */
+	/* trap cmd */
 	char code[] = {0xcd, 0x80, 0xcc};
 	char backup[20];
 	char backup2[20];
