@@ -4,7 +4,7 @@ Get FPS(frame per second) on android. Root privileges required.
 ## Still developing
 Not working for now.
 
-目前遇到了点瓶颈。只hook函数eglSwapBuffers看来还不够。
+目前遇到了点瓶颈。只hook函数eglSwapBuffers看来还不够。(忽略了点细节，只要在adb开发选项中把硬件刷新关了就可以了)
 
 需要从基础工作开始研究了。
 

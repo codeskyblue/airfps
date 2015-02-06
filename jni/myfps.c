@@ -398,9 +398,6 @@ void* do_hook(const char *module_path, void* hook_func, const char *symbol_name)
 */
  
 
-EGLBoolean (*orig_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surf);
-EGLBoolean (*orig_eglCopyBuffers)(EGLDisplay dpy, EGLSurface surf, NativePixmapType pixmap);
-EGLBoolean (*orig_eglInitialize)(EGLDisplay display, EGLint * major, EGLint * minor);
 
 unsigned int frames = 0;
 struct timeval start_time, curr_time;
@@ -412,15 +409,7 @@ float time_elapsed(struct timeval t0, struct timeval t1){
 	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
-EGLBoolean hooked_eglCopyBuffers(EGLDisplay display, EGLSurface surface, NativePixmapType native_pixmap){
-	LOGI("INJECT hook copy buffer");
-	return EGL_TRUE;
-}
-
-EGLBoolean hooked_eglInitialize(EGLDisplay display, EGLint * major, EGLint * minor){
-	LOGI("INJECT hook initialize");
-	return orig_eglInitialize(display, major, minor);
-}
+EGLBoolean (*orig_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surf);
 
 EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surf)
 {
@@ -437,16 +426,18 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surf)
 		frames = 0;
 	}
 
-	LOGI("eglSwapBuffers is invoked %p %p\n", orig_eglSwapBuffers, eglSwapBuffers);
+	//LOGI("eglSwapBuffers is invoked %p %p\n", orig_eglSwapBuffers, eglSwapBuffers);
 
 	return (*orig_eglSwapBuffers)(dpy, surf);
 }
 
 
-void hook_entry(char* a)
+void hook_entry(char *a)
 {
 	LOGI("HOOK success, pid=%d\n", getpid());
 	LOGI("Start hooking\n");
+	LOGI("HOOK address: %s\n", a);
+
 	//hook_eglSwapBuffers();
 	char *sym = "eglSwapBuffers";
 	char *module_path = "/system/lib/libsurfaceflinger.so";
@@ -456,8 +447,7 @@ void hook_entry(char* a)
 		LOGE("Hooked %s failed", sym);
 		return ;
 	}
-	orig_eglCopyBuffers = do_hook(module_path, hooked_eglSwapBuffers, "eglCopyBuffers");
-	orig_eglInitialize = do_hook(module_path, hooked_eglInitialize, "eglInitialize");
 
 	LOGI("orignal eglSwapBufffers 0x%x", orig_eglSwapBuffers);
+	LOGI("new eglSwapBufffers 0x%x", hooked_eglSwapBuffers);
 }

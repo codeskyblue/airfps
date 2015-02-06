@@ -19,6 +19,7 @@ var (
 	pname    = flag.String("pname", "/system/bin/surfaceflinger", "process name(ignore if pid set)")
 	libpath  = flag.String("l", "", "libpath to inject")
 	hookfunc = flag.String("n", "hook_entry", "function name to call")
+	hookarg  = flag.String("a", "abcdefg", "arguments to hookfunc")
 )
 
 func SurfacePid() int {
@@ -50,21 +51,23 @@ func TrapSignal(sigs ...os.Signal) {
 func main() {
 	flag.Parse()
 	sfpid := SurfacePid()
-	fmt.Println("surfaceflinger pid=", sfpid)
+	fmt.Println("surfaceflinger pid:", sfpid)
 
 	dir := filepath.Join(filepath.Dir(os.Args[0]), "_tmp")
 	dir, _ = filepath.Abs(dir)
-	storetxt := filepath.Join(dir, "store.txt")
+	//storetxt := filepath.Join(dir, "store.txt")
 	var err error
 
 	if *libpath == "" {
 		if err = RestoreAsset(dir, LIBMYFPS); err != nil {
 			log.Fatal(err)
 		}
+		*libpath = filepath.Join(dir, LIBMYFPS)
 	} else {
 		*libpath, _ = filepath.Abs(*libpath)
 	}
 
+	arg := C.CString(*hookarg)
 	C.inject_remote_process(C.pid_t(sfpid), C.CString(*libpath),
-		C.CString(*hookfunc), unsafe.Pointer(&storetxt), C.size_t(len(storetxt)))
+		C.CString(*hookfunc), unsafe.Pointer(arg), C.size_t(len(*hookarg)))
 }

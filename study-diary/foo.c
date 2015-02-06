@@ -9,7 +9,12 @@
 
 #include <stdio.h>
 
+int HWC = 7;
+
 void foo(){
-	puts("Hello, I'm a shared library");
+	printf("This is shard lib, foo(%d)\n", HWC);
 }
 
+void hook_entry(char*a){
+	puts("Hook foo success");
+}

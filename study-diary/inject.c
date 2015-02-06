@@ -486,7 +486,7 @@ int inject_remote_process(pid_t target_pid, const char *library_path,
         goto exit;    
     
     /* restore */    
-	printf("Restore\n");
+	printf("detach\n");
     ptrace_setregs(target_pid, &original_regs);    
     ptrace_detach(target_pid);    
     ret = 0;    
