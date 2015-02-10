@@ -49,5 +49,12 @@ function `__android_log_print` should not appear in `hook_entry` function.
 	./airfps -l libfps.so -pname ./bar # unhack
 	./airfps -l libfps.so -pname ./bar # hack
 
+	su
+	cd /data/local/tmp
+	./airfps -l libfps.so -rf eglSwapBuffers -rl /system/lib/libsurfaceflinger.so
+
+	adb shell
+	tail -f /data/local/tmp/log.txt
+
 ## LICENSE
 Under [GPL v2](LICENSE)

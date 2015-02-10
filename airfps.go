@@ -1,7 +1,7 @@
 package main
 
 // #cgo CFLAGS: -DGOLANG=1
-// #cgo LDFLAGS: -lm -llog
+// #cgo LDFLAGS: -lm -llog -landroid -lEGL -lGLESv2
 // #include "inject.h"
 // #include "utils.h"
 import "C"
@@ -22,7 +22,7 @@ var (
 	hookfunc = flag.String("n", "hook_entry", "hook init function")
 
 	repllib  = flag.String("rl", "/data/local/tmp/libfoo.so", "hooked library")
-	replfunc = flag.String("rf", "puts", "hooked function name")
+	replfunc = flag.String("rf", "eglSwapBuffers", "hooked function name")
 )
 
 func SurfacePid() int {

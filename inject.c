@@ -227,44 +227,6 @@ int ptrace_detach(pid_t pid)
     return 0;    
 }    
     
-/*
-void* get_module_base(pid_t pid, const char* module_name)    
-{    
-    FILE *fp;    
-    long addr = 0;    
-    char *pch;    
-    char filename[32];    
-    char line[1024];    
-    
-    if (pid < 0) {    
-        // self process
-        snprintf(filename, sizeof(filename), "/proc/self/maps", pid);    
-    } else {    
-        snprintf(filename, sizeof(filename), "/proc/%d/maps", pid);    
-    }    
-    
-    fp = fopen(filename, "r");    
-    
-    if (fp != NULL) {    
-        while (fgets(line, sizeof(line), fp)) {    
-            if (strstr(line, module_name)) {    
-                pch = strtok( line, "-" );    
-                addr = strtoul( pch, NULL, 16 );    
-    
-                if (addr == 0x8000)    
-                    addr = 0;    
-    
-                break;    
-            }    
-        }    
-    
-        fclose(fp) ;    
-    }    
-    
-    return (void *)addr;    
-}    
-*/
-    
 void* get_remote_addr(pid_t target_pid, const char* module_name, void* local_addr)    
 {    
     void* local_handle, *remote_handle;    
@@ -400,7 +362,8 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     if (ptrace_call_wrapper(target_pid, "mmap", mmap_addr, parameters, 6, &regs) == -1)    
         goto exit;    
     
-    map_base = ptrace_retval(&regs);    
+    map_base = ptrace_retval(&regs);
+    DEBUG_PRINT("[+] map_base %p\n", map_base);
     
     dlopen_addr = get_remote_addr( target_pid, linker_path, (void *)dlopen );    
     dlsym_addr = get_remote_addr( target_pid, linker_path, (void *)dlsym );    
@@ -410,8 +373,8 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     DEBUG_PRINT("[+] Get imports: dlopen: %x, dlsym: %x, dlclose: %x, dlerror: %x\n",    
             dlopen_addr, dlsym_addr, dlclose_addr, dlerror_addr);    
     
-    printf("library path = %s\n", library_path);    
-    ptrace_writedata(target_pid, map_base, library_path, strlen(library_path) + 1);    
+    printf("library path = %s\n", library_path);
+    ptrace_writedata(target_pid, map_base, library_path, strlen(library_path) + 1);
     
     parameters[0] = map_base;       
     parameters[1] = RTLD_NOW| RTLD_GLOBAL;     
@@ -434,9 +397,9 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     
 #define FUNCTION_PARAM_ADDR_OFFSET      0x200    
     ptrace_writedata(target_pid, map_base + FUNCTION_PARAM_ADDR_OFFSET, param, strlen(param) + 1);    
-    parameters[0] = map_base + FUNCTION_PARAM_ADDR_OFFSET;      
+    parameters[0] = map_base + FUNCTION_PARAM_ADDR_OFFSET;
   
-    if (ptrace_call_wrapper(target_pid, "hook_entry", hook_entry_addr, parameters, 1, &regs) == -1)    
+    if (ptrace_call_wrapper(target_pid, "hook_entry", hook_entry_addr, parameters, 1, &regs) == -1)
         goto exit;        
     
     //printf("Press enter to dlclose and detach\n");

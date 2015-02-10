@@ -14,12 +14,6 @@
 #include <time.h>
 #include <sys/stat.h>
   
-#include <android/log.h>  
-#define LOG_TAG "INJECT"  
-#define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, fmt, ##args)
-#define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ##args)
-#define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, fmt, ##args)
-
 #define PAGE_START(addr, size) ~((size) - 1) & (addr)
 
 EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surf) = NULL;
@@ -61,23 +55,21 @@ int new_puts(const char *a){
 	printf("hacked, This is new shard lib\n");
 }
 
-int func_replace(long func_addr, long new_func){
-	LOG("INJECT Found eglSwapBuffers in got\n");    
-
+int func_replace(long func_addr, long new_func, long old_func){
 	long page_size = getpagesize();  
 	long entry_page_start = (func_addr) & (~(page_size - 1));  
 	LOG("page start: %p\n", entry_page_start);
 	int ret = mprotect((long *)entry_page_start, page_size, PROT_READ | PROT_WRITE);  
 	LOG("mprotect return: %d\n", ret);
 	if (ret == 0){
-		LOG("origin: %p\n", *(long*)(func_addr));// = new_func; //new_eglSwapBuffers;    
-		LOG("new   : %p\n", new_func);
-		LOG("puts  : %p\n", puts);
 		long *target = (long*)(func_addr);
-		if (*target == (long)puts){
+		LOG("cur   : %p\n", *target);
+		LOG("new   : %p\n", new_func);
+		LOG("old   : %p\n", puts);
+		if (*target == (long)old_func){
 			*target = new_func;
 		} else {
-			*target = (long)puts;
+			*target = (long)old_func;
 		}
 	}
 }
@@ -91,11 +83,12 @@ int hook_entry(char*a){
 	LOG("arguments: %s\n", a);
 	long addr = 0;
 	sscanf(a, "%p", &addr);
-	printf("addr = %p\n", addr);
-	func_replace(addr, (long)new_puts);
+	LOG("addr = %p\n", addr);
+	//func_replace(addr, (long)new_puts, (long)puts);
+	func_replace(addr, (long)new_eglSwapBuffers, (long)eglSwapBuffers);
 	//int ret = mkfifo("/data/local/tmp/my_fifo", 0777);
 	//printf("ret: %d\n", ret);
-	printf("Hook foo success\n");
+	LOG("Hook foo success\n");
 
 	fclose(logfp);
 	return 0;

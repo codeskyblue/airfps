@@ -14,7 +14,7 @@ libfps.so: fps.c utils.c
 	gcc -shared -o $@ fps.o
 	adb push libfps.so /data/local/tmp/
 
-airfps: airfps.go utils.c
+airfps: airfps.go utils.c inject.c
 	go build
 	adb push airfps /data/local/tmp
 	adb shell chmod 777 /data/local/tmp/airfps
