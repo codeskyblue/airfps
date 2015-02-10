@@ -12,7 +12,9 @@
 int HWC = 7;
 
 void foo(){
-	printf("This is shard lib, foo(%d)\n", HWC);
+	//printf("This is a shared lib\n");
+	puts("This is a shared lib");
+	//puts("shared lib");
 }
 
 void hook_entry(char*a){

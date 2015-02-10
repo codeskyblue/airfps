@@ -30,5 +30,24 @@ Golang需要1.4+的版本，直接下载个就好 <http://golang.org/dl/>
 * [jinzhuojun的CSDN-如何写出一个显示fps的东西](http://blog.csdn.net/jinzhuojun/article/details/10428435)
 * [hook的原理](http://bbs.pediy.com/showthread.php?t=157419)
 
+## Demo
+
+function `__android_log_print` should not appear in `hook_entry` function.
+
+	cd study-diary
+	make install
+	cd ..
+	make
+	
+	adb shell 
+	cd /data/local/tmp/
+	export LD_LIBRARY_PATH=$PWD
+	./bar
+
+	adb shell
+	./airfps -l libfps.so -pname ./bar # hack
+	./airfps -l libfps.so -pname ./bar # unhack
+	./airfps -l libfps.so -pname ./bar # hack
+
 ## LICENSE
 Under [GPL v2](LICENSE)

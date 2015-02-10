@@ -15,32 +15,15 @@
 #include <getopt.h>
 
 // FIXME(ssx): alse define here
-#include <android/log.h>    
 #include <asm/user.h>    
 #include <asm/ptrace.h>    // `struct pt_regs` defined here
+
+#include "utils.h"
     
 #if defined(__i386__)    
 #define pt_regs         user_regs_struct    
 #endif    
     
-// FIXME(ssx): add #cgo CFLAG in header
-#define ENABLE_DEBUG 1
-    
-#if ENABLE_DEBUG
-#define  LOG_TAG "INJECT"    
-#define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ##args)
-#define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, fmt, ##args)
-#define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, fmt, ##args)
-#define DEBUG_PRINT(format,args...) \    
-    LOGD(format, ##args)    
-#else    
-#define DEBUG_PRINT(format,args...) printf(format, args...)
-#define LOGD(fmt, args...) DEBUG_PRINT(fmt, args...)
-#define LOGI(fmt, args...) DEBUG_PRINT(fmt, args...)
-#define LOGE(fmt, args...) DEBUG_PRINT(fmt, args...)
-#endif    
-    
-#define CPSR_T_MASK     ( 1u << 5 )    
     
 const char *libc_path = "/system/lib/libc.so";    
 const char *linker_path = "/system/bin/linker";    
@@ -244,6 +227,7 @@ int ptrace_detach(pid_t pid)
     return 0;    
 }    
     
+/*
 void* get_module_base(pid_t pid, const char* module_name)    
 {    
     FILE *fp;    
@@ -253,7 +237,7 @@ void* get_module_base(pid_t pid, const char* module_name)
     char line[1024];    
     
     if (pid < 0) {    
-        /* self process */    
+        // self process
         snprintf(filename, sizeof(filename), "/proc/self/maps", pid);    
     } else {    
         snprintf(filename, sizeof(filename), "/proc/%d/maps", pid);    
@@ -279,13 +263,14 @@ void* get_module_base(pid_t pid, const char* module_name)
     
     return (void *)addr;    
 }    
+*/
     
 void* get_remote_addr(pid_t target_pid, const char* module_name, void* local_addr)    
 {    
     void* local_handle, *remote_handle;    
     
-    local_handle = get_module_base(-1, module_name);    
-    remote_handle = get_module_base(target_pid, module_name);    
+    local_handle = (void*)get_module_base(-1, module_name);    
+    remote_handle = (void*)get_module_base(target_pid, module_name);    
     
     DEBUG_PRINT("[+] get_remote_addr: local[%x], remote[%x]\n", local_handle, remote_handle);    
     

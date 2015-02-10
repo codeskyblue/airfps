@@ -36,7 +36,7 @@ counter: counter.c libfoo.so
 	gcc -o counter counter.c
 
 bar: bar.c libfoo.so
-	gcc -o bar -lfoo -L$(PWD) bar.c
+	gcc -o bar -lfoo -L$(PWD) bar.c -llog
 
 loadso: loadso.c
 	gcc -o $@ loadso.c -ldl
